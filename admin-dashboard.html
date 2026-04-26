@@ -229,16 +229,16 @@ document.getElementById('loginPassword').addEventListener('keydown', (e) => {
 // ── DASHBOARD ─────────────────────────────────
 
 function mostrarDashboard(admin) {
-  document.getElementById('loginContainer').hidden = true;
-  document.getElementById('adminDashboard').hidden = false;
+  document.getElementById('loginContainer').style.display = 'none';
+  document.getElementById('adminDashboard').style.display = 'block';
   document.getElementById('adminNombre').textContent = `Hola, ${escapeHtml(admin.nombre)} 👋`;
   cargarPedidos();
 }
 
 document.getElementById('btnLogout').addEventListener('click', () => {
   limpiarSesion();
-  document.getElementById('adminDashboard').hidden = true;
-  document.getElementById('loginContainer').hidden = false;
+  document.getElementById('adminDashboard').style.display = 'none';
+  document.getElementById('loginContainer').style.display = 'flex';
 });
 
 document.getElementById('btnRefrescar').addEventListener('click', cargarPedidos);
@@ -420,7 +420,11 @@ document.addEventListener('DOMContentLoaded', () => {
       mostrarDashboard(admin);
     } catch {
       limpiarSesion();
+      document.getElementById('loginContainer').style.display = 'flex';
     }
+  } else {
+    document.getElementById('loginContainer').style.display = 'flex';
+    document.getElementById('adminDashboard').style.display = 'none';
   }
 });
 
