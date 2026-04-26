@@ -7,7 +7,7 @@
 'use strict';
 
 // ── Configuración ─────────────────────────────
-const API_BASE = window.FLORERIA_API_URL || 'https://tu-api.onrender.com';
+const API_BASE = window.FLORERIA_API_URL || 'https://floreria-backend-xy1c.onrender.com';
 
 // ── Estado del módulo ─────────────────────────
 let todosLosProductos = [];    // Catálogo completo
