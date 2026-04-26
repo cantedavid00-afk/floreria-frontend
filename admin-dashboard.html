@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel Admin — Flor & Arte</title>
+  <!-- Sin indexación para ocultar del buscador -->
+  <meta name="robots" content="noindex, nofollow" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- LOGIN — Se muestra si no hay sesión        -->
+<!-- ══════════════════════════════════════════ -->
+<div class="login-container" id="loginContainer">
+  <div class="login-card">
+    <div style="font-size:2rem;margin-bottom:8px">🌸</div>
+    <h2>Panel Administrador</h2>
+    <p>Acceso restringido. Solo personal autorizado.</p>
+
+    <div class="login-error" id="loginError"></div>
+
+    <div class="form-group">
+      <label for="loginUsuario">Usuario</label>
+      <input class="form-control" id="loginUsuario" type="text" placeholder="admin" autocomplete="username" maxlength="50" />
+    </div>
+    <div class="form-group">
+      <label for="loginPassword">Contraseña</label>
+      <input class="form-control" id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password" maxlength="128" />
+    </div>
+    <button class="btn btn--primary btn--block" id="btnLogin" style="margin-top:8px">
+      Iniciar sesión →
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- DASHBOARD — Se muestra tras el login       -->
+<!-- ══════════════════════════════════════════ -->
+<div class="admin-page" id="adminDashboard" hidden>
+
+  <header class="admin-header">
+    <div style="display:flex;align-items:center;gap:12px">
+      <span>🌸</span>
+      <h1>Flor & Arte — Panel de Administrador</h1>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px">
+      <span id="adminNombre" style="opacity:0.8;font-size:0.9rem"></span>
+      <button class="btn btn--outline" id="btnLogout" style="color:#fff;border-color:rgba(255,255,255,0.4);padding:8px 18px;font-size:0.85rem">
+        Cerrar sesión
+      </button>
+    </div>
+  </header>
+
+  <div class="admin-body">
+
+    <!-- Estadísticas -->
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card">
+        <div class="stat-card__numero" id="statTotal">–</div>
+        <div class="stat-card__label">Total pedidos</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__numero" id="statPendientes">–</div>
+        <div class="stat-card__label">En preparación</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__numero" id="statHoy">–</div>
+        <div class="stat-card__label">Entregas hoy</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__numero" id="statIngresos">–</div>
+        <div class="stat-card__label">Ingresos del mes</div>
+      </div>
+    </div>
+
+    <!-- Tabla de pedidos -->
+    <div class="tabla-card">
+      <div class="tabla-header">
+        <h2>Pedidos agendados</h2>
+        <div style="display:flex;gap:10px;align-items:center">
+          <!-- Filtro por estado -->
+          <select class="form-control" id="filtroEstado" style="padding:8px 14px;width:auto">
+            <option value="">Todos los estados</option>
+            <option value="recibido">Recibido</option>
+            <option value="en_preparacion">En preparación</option>
+            <option value="en_camino">En camino</option>
+            <option value="entregado">Entregado</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+          <button class="btn btn--outline" id="btnRefrescar" style="padding:8px 16px;font-size:0.85rem">
+            🔄 Refrescar
+          </button>
+        </div>
+      </div>
+
+      <div id="tablaCargando" style="text-align:center;padding:40px;color:#888">
+        Cargando pedidos...
+      </div>
+
+      <div style="overflow-x:auto">
+        <table id="tablaPedidos" hidden>
+          <thead>
+            <tr>
+              <th>Fecha entrega ↑</th>
+              <th>Cliente</th>
+              <th>Ramo</th>
+              <th>Extras</th>
+              <th>Dirección</th>
+              <th>Pago</th>
+              <th>Estado pedido</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tablaCuerpo">
+          </tbody>
+        </table>
+      </div>
+
+      <div id="tablaVacia" hidden style="text-align:center;padding:40px;color:#888">
+        No se encontraron pedidos.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+const API_BASE   = window.FLORERIA_API_URL || 'https://tu-api.onrender.com';
+const TOKEN_KEY  = 'floreria_admin_token';
+const ADMIN_KEY  = 'floreria_admin_info';
+
+// ── Helpers ───────────────────────────────────
+const escapeHtml = (str) =>
+  String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+const formatearPrecio = (n) =>
+  new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n || 0);
+
+const formatearFecha = (f) => f
+  ? new Date(f).toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'numeric' })
+  : '–';
+
+function obtenerToken() { return sessionStorage.getItem(TOKEN_KEY); }
+function guardarSesion(token, admin) {
+  sessionStorage.setItem(TOKEN_KEY, token);
+  sessionStorage.setItem(ADMIN_KEY, JSON.stringify(admin));
+}
+function limpiarSesion() {
+  sessionStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(ADMIN_KEY);
+}
+
+// ── Badge de estado del pedido ─────────────────
+function badgeEstadoPago(estado) {
+  const mapa = {
+    aprobado:    ['verde',    '✅ Aprobado'],
+    pendiente:   ['amarillo', '⏳ Pendiente'],
+    rechazado:   ['rojo',     '❌ Rechazado'],
+    reembolsado: ['azul',     '↩️ Reembolso'],
+  };
+  const [color, texto] = mapa[estado] || ['gris', estado];
+  return `<span class="badge badge--${color}">${escapeHtml(texto)}</span>`;
+}
+
+function badgeEstadoPedido(estado) {
+  const mapa = {
+    recibido:       ['azul',     '📥 Recibido'],
+    en_preparacion: ['amarillo', '🌸 Preparando'],
+    en_camino:      ['verde',    '🚚 En camino'],
+    entregado:      ['verde',    '✅ Entregado'],
+    cancelado:      ['rojo',     '❌ Cancelado'],
+  };
+  const [color, texto] = mapa[estado] || ['gris', estado];
+  return `<span class="badge badge--${color}">${escapeHtml(texto)}</span>`;
+}
+
+// ── LOGIN ─────────────────────────────────────
+
+document.getElementById('btnLogin').addEventListener('click', async () => {
+  const usuario  = document.getElementById('loginUsuario').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errorEl  = document.getElementById('loginError');
+  const btn      = document.getElementById('btnLogin');
+
+  errorEl.classList.remove('visible');
+
+  if (!usuario || !password) {
+    errorEl.textContent = 'Ingresa usuario y contraseña.';
+    errorEl.classList.add('visible');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Verificando...';
+
+  try {
+    const res = await fetch(`${API_BASE}/api/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ usuario, password }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || 'Credenciales incorrectas.');
+
+    guardarSesion(data.token, data.admin);
+    mostrarDashboard(data.admin);
+
+  } catch (error) {
+    errorEl.textContent = error.message;
+    errorEl.classList.add('visible');
+    document.getElementById('loginPassword').value = '';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Iniciar sesión →';
+  }
+});
+
+// Enter en password dispara el login
+document.getElementById('loginPassword').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('btnLogin').click();
+});
+
+// ── DASHBOARD ─────────────────────────────────
+
+function mostrarDashboard(admin) {
+  document.getElementById('loginContainer').hidden = true;
+  document.getElementById('adminDashboard').hidden = false;
+  document.getElementById('adminNombre').textContent = `Hola, ${escapeHtml(admin.nombre)} 👋`;
+  cargarPedidos();
+}
+
+document.getElementById('btnLogout').addEventListener('click', () => {
+  limpiarSesion();
+  document.getElementById('adminDashboard').hidden = true;
+  document.getElementById('loginContainer').hidden = false;
+});
+
+document.getElementById('btnRefrescar').addEventListener('click', cargarPedidos);
+document.getElementById('filtroEstado').addEventListener('change', cargarPedidos);
+
+// ── CARGA DE PEDIDOS ───────────────────────────
+
+async function cargarPedidos() {
+  const token = obtenerToken();
+  if (!token) return;
+
+  const cargandoEl = document.getElementById('tablaCargando');
+  const tablaEl    = document.getElementById('tablaPedidos');
+  const vaciaEl    = document.getElementById('tablaVacia');
+  const estadoFiltro = document.getElementById('filtroEstado').value;
+
+  cargandoEl.style.display = 'block';
+  tablaEl.hidden = true;
+  vaciaEl.hidden = true;
+
+  try {
+    let url = `${API_BASE}/api/pedidos?limite=50`;
+    if (estadoFiltro) url += `&estado=${encodeURIComponent(estadoFiltro)}`;
+
+    const res = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (res.status === 401) {
+      // Token expirado
+      limpiarSesion();
+      alert('Tu sesión expiró. Por favor inicia sesión de nuevo.');
+      window.location.reload();
+      return;
+    }
+
+    if (!res.ok) throw new Error(`Error ${res.status}`);
+
+    const { pedidos, total } = await res.json();
+    actualizarEstadisticas(pedidos, total);
+    renderizarTablaPedidos(pedidos);
+
+    cargandoEl.style.display = 'none';
+
+    if (pedidos.length === 0) {
+      vaciaEl.hidden = false;
+    } else {
+      tablaEl.hidden = false;
+    }
+
+  } catch (error) {
+    cargandoEl.textContent = `❌ Error: ${escapeHtml(error.message)}`;
+  }
+}
+
+// ── ESTADÍSTICAS ───────────────────────────────
+
+function actualizarEstadisticas(pedidos, total) {
+  const hoy = new Date().toDateString();
+
+  const pendientes = pedidos.filter(p =>
+    ['recibido', 'en_preparacion'].includes(p.estadoPedido)
+  ).length;
+
+  const entregasHoy = pedidos.filter(p => {
+    const fecha = new Date(p.entrega?.fechaEntrega).toDateString();
+    return fecha === hoy;
+  }).length;
+
+  // Ingresos del mes actual
+  const ahora = new Date();
+  const ingresosMes = pedidos
+    .filter(p => {
+      if (p.pago?.estado !== 'aprobado') return false;
+      const f = new Date(p.pago?.fechaPago);
+      return f.getMonth() === ahora.getMonth() && f.getFullYear() === ahora.getFullYear();
+    })
+    .reduce((acc, p) => acc + (p.total || 0), 0);
+
+  document.getElementById('statTotal').textContent     = total;
+  document.getElementById('statPendientes').textContent = pendientes;
+  document.getElementById('statHoy').textContent        = entregasHoy;
+  document.getElementById('statIngresos').textContent   = formatearPrecio(ingresosMes);
+}
+
+// ── TABLA DE PEDIDOS ───────────────────────────
+
+function renderizarTablaPedidos(pedidos) {
+  const tbody = document.getElementById('tablaCuerpo');
+
+  tbody.innerHTML = pedidos.map(p => {
+    const extras = p.extras?.length
+      ? p.extras.map(e => escapeHtml(e.nombre)).join(', ')
+      : '—';
+
+    const direccion = `${escapeHtml(p.entrega?.calle || '')} ${escapeHtml(p.entrega?.numero || '')}, ${escapeHtml(p.entrega?.colonia || '')}`;
+
+    return `
+      <tr>
+        <td>
+          <strong>${formatearFecha(p.entrega?.fechaEntrega)}</strong>
+          <br><small style="color:#999">${escapeHtml(p.entrega?.horaEntrega || 'Sin hora')}</small>
+        </td>
+        <td>
+          <strong>${escapeHtml(p.cliente?.nombre)}</strong>
+          <br><small style="color:#999">${escapeHtml(p.cliente?.telefono)}</small>
+        </td>
+        <td>${escapeHtml(p.ramo?.nombre || '–')}</td>
+        <td style="max-width:140px;font-size:0.82rem">${extras}</td>
+        <td style="max-width:160px;font-size:0.82rem">
+          ${direccion}
+          <br><small style="color:#999">CP ${escapeHtml(p.entrega?.codigoPostal)}</small>
+        </td>
+        <td>
+          ${badgeEstadoPago(p.pago?.estado)}
+          <br><small style="color:#999">${formatearPrecio(p.total)}</small>
+        </td>
+        <td>${badgeEstadoPedido(p.estadoPedido)}</td>
+        <td>
+          <select
+            class="form-control"
+            style="padding:6px;font-size:0.82rem;width:130px"
+            onchange="actualizarEstadoPedido('${escapeHtml(p._id)}', this.value)"
+          >
+            <option value="">Cambiar...</option>
+            <option value="recibido">📥 Recibido</option>
+            <option value="en_preparacion">🌸 Preparando</option>
+            <option value="en_camino">🚚 En camino</option>
+            <option value="entregado">✅ Entregado</option>
+            <option value="cancelado">❌ Cancelado</option>
+          </select>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ── ACTUALIZAR ESTADO DE PEDIDO ────────────────
+
+async function actualizarEstadoPedido(pedidoId, nuevoEstado) {
+  if (!nuevoEstado) return;
+  const token = obtenerToken();
+  if (!token) return;
+
+  if (!confirm(`¿Cambiar estado del pedido a "${nuevoEstado}"?`)) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/api/pedidos/${encodeURIComponent(pedidoId)}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ estadoPedido: nuevoEstado }),
+    });
+
+    if (!res.ok) throw new Error('No se pudo actualizar el estado.');
+
+    // Refrescar la tabla
+    await cargarPedidos();
+
+  } catch (error) {
+    alert(`❌ ${error.message}`);
+  }
+}
+
+// ── INICIALIZACIÓN ─────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Verificar si ya hay una sesión activa
+  const token = obtenerToken();
+  const adminInfo = sessionStorage.getItem(ADMIN_KEY);
+
+  if (token && adminInfo) {
+    try {
+      const admin = JSON.parse(adminInfo);
+      mostrarDashboard(admin);
+    } catch {
+      limpiarSesion();
+    }
+  }
+});
+
+// Exponer para uso en la tabla (onclick)
+window.actualizarEstadoPedido = actualizarEstadoPedido;
+</script>
+
+</body>
+</html>
