@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flor & Arte — Florería Local en Apizaco</title>
+  <meta name="description" content="Ramos y arreglos florales con entrega a domicilio en Apizaco, Tlaxcala y municipios aledaños." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- HEADER                                     -->
+<!-- ══════════════════════════════════════════ -->
+<header class="header">
+  <div class="header__inner">
+    <a href="/" class="header__logo">
+      <span class="logo-icon">🌸</span>
+      <span class="logo-text">Flor <em>&</em> Arte</span>
+    </a>
+    <nav class="header__nav">
+      <a href="#catalogo">Catálogo</a>
+      <a href="#nosotros">Nosotros</a>
+      <a href="#cobertura">Cobertura</a>
+    </nav>
+    <button class="btn-carrito" id="btnCarrito" aria-label="Ver carrito">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/>
+        <path d="M16 10a4 4 0 01-8 0"/>
+      </svg>
+      <span class="carrito-badge" id="carritoBadge" hidden>0</span>
+    </button>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- HERO                                       -->
+<!-- ══════════════════════════════════════════ -->
+<section class="hero">
+  <div class="hero__content">
+    <p class="hero__eyebrow">Apizaco · Tlaxcala</p>
+    <h1 class="hero__title">Flores que<br/><em>hablan por ti</em></h1>
+    <p class="hero__subtitle">Arreglos artesanales con entrega a domicilio el mismo día en tu zona.</p>
+    <a href="#catalogo" class="btn btn--primary">Ver catálogo</a>
+  </div>
+  <div class="hero__visual">
+    <div class="hero__circle"></div>
+    <div class="hero__petals">🌹🌸🌷🌺</div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- CATÁLOGO                                   -->
+<!-- ══════════════════════════════════════════ -->
+<section class="catalogo" id="catalogo">
+  <div class="container">
+    <header class="section-header">
+      <h2>Nuestros Arreglos</h2>
+      <p>Cada pieza elaborada con flores frescas de temporada</p>
+    </header>
+
+    <!-- Filtros de categoría -->
+    <div class="filtros" id="filtros" role="tablist">
+      <button class="filtro-btn active" data-cat="todos" role="tab">Todos</button>
+      <button class="filtro-btn" data-cat="ramo" role="tab">Ramos</button>
+      <button class="filtro-btn" data-cat="arreglo" role="tab">Arreglos</button>
+      <button class="filtro-btn" data-cat="planta" role="tab">Plantas</button>
+    </div>
+
+    <!-- Grid de productos -->
+    <div class="productos-grid" id="productosGrid">
+      <!-- Skeletons de carga -->
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+    </div>
+
+    <!-- Estado de error -->
+    <div class="error-estado" id="errorEstado" hidden>
+      <p>😔 No pudimos cargar el catálogo. Intenta de nuevo.</p>
+      <button class="btn btn--outline" onclick="cargarProductos()">Reintentar</button>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- MODAL: EXTRAS (Upselling)                  -->
+<!-- ══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalExtras" role="dialog" aria-modal="true" aria-labelledby="modalExtrasTitle" hidden>
+  <div class="modal">
+    <button class="modal__close" id="cerrarModalExtras" aria-label="Cerrar">✕</button>
+    <div class="modal__header">
+      <h3 id="modalExtrasTitle">🎁 ¡Completa tu regalo!</h3>
+      <p>Agrega algo especial a tu ramo</p>
+    </div>
+    <div class="modal__body">
+      <div class="extras-grid" id="extrasGrid">
+        <!-- Se rellena dinámicamente -->
+      </div>
+    </div>
+    <div class="modal__footer">
+      <button class="btn btn--outline" id="btnSaltarExtras">Continuar sin extras</button>
+      <button class="btn btn--primary" id="btnAgregarAlCarrito">Agregar al carrito →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- CARRITO LATERAL (Drawer)                   -->
+<!-- ══════════════════════════════════════════ -->
+<aside class="carrito-drawer" id="carritoDrawer" aria-label="Carrito de compras">
+  <div class="carrito-drawer__header">
+    <h3>Tu carrito</h3>
+    <button class="modal__close" id="cerrarCarrito" aria-label="Cerrar carrito">✕</button>
+  </div>
+  <div class="carrito-drawer__items" id="carritoItems">
+    <!-- Items del carrito -->
+  </div>
+  <div class="carrito-drawer__footer" id="carritoFooter" hidden>
+    <div class="carrito-total">
+      <span>Subtotal</span>
+      <strong id="carritoTotal">$0.00</strong>
+    </div>
+    <p class="carrito-nota">El costo de envío se calcula en el siguiente paso.</p>
+    <a href="checkout.html" class="btn btn--primary btn--block" id="btnIrCheckout">
+      Ir a pagar →
+    </a>
+  </div>
+  <div class="carrito-vacio" id="carritoVacio">
+    <span>🛒</span>
+    <p>Tu carrito está vacío</p>
+  </div>
+</aside>
+<div class="overlay-oscuro" id="overlayOscuro" hidden></div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- SECCIÓN: Cobertura                         -->
+<!-- ══════════════════════════════════════════ -->
+<section class="cobertura" id="cobertura">
+  <div class="container cobertura__inner">
+    <div class="cobertura__texto">
+      <h2>Zona de entrega</h2>
+      <p>Entregamos con amor en:</p>
+      <ul class="cobertura__lista">
+        <li>📍 Apizaco</li>
+        <li>📍 Tlaxcala Ciudad</li>
+        <li>📍 Chiautempan</li>
+        <li>📍 Apetatitlán</li>
+        <li>📍 Yauhquemehcan</li>
+        <li>📍 Tetla de la Solidaridad</li>
+        <li>📍 Papalotla y Xaloztoc</li>
+      </ul>
+      <p class="cobertura__nota">¿Dudas sobre tu colonia? Escríbenos por WhatsApp.</p>
+    </div>
+    <div class="cobertura__mapa">
+      <div class="mapa-placeholder">
+        <span>🗺️</span>
+        <p>Tlaxcala, México</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- FOOTER                                     -->
+<!-- ══════════════════════════════════════════ -->
+<footer class="footer">
+  <div class="container footer__inner">
+    <div class="footer__brand">
+      <span class="logo-icon">🌸</span>
+      <span class="logo-text">Flor <em>&</em> Arte</span>
+    </div>
+    <p>Flores frescas · Entrega local · Hecho con amor en Tlaxcala</p>
+    <p class="footer__copy">&copy; 2025 Flor & Arte. Todos los derechos reservados.</p>
+  </div>
+</footer>
+
+<script src="js/carrito.js"></script>
+<script src="js/catalogo.js"></script>
+</body>
+</html>
