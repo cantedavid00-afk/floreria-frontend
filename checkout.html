@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checkout — Flor & Arte</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<header class="header">
+  <div class="header__inner">
+    <a href="/" class="header__logo">
+      <span class="logo-icon">🌸</span>
+      <span class="logo-text">Flor <em>&</em> Arte</span>
+    </a>
+    <div style="margin-left:auto;font-size:0.9rem;color:#888">Paso final → Confirmar pedido</div>
+  </div>
+</header>
+
+<main class="checkout-page">
+  <h1 style="font-family:var(--font-display);font-size:2rem;margin-bottom:32px;color:var(--negro)">
+    Completa tu pedido 🌸
+  </h1>
+
+  <!-- Alerta si el carrito está vacío -->
+  <div id="carritoVacioAlerta" hidden style="text-align:center;padding:60px;">
+    <p style="font-size:1.2rem;margin-bottom:20px">Tu carrito está vacío 🛒</p>
+    <a href="/" class="btn btn--primary">Ver catálogo</a>
+  </div>
+
+  <div class="checkout-grid" id="checkoutContenido">
+
+    <!-- ── Formulario ── -->
+    <div class="checkout-formulario">
+
+      <!-- Datos del cliente -->
+      <div class="form-section">
+        <h3>👤 Tus datos</h3>
+        <div class="form-group">
+          <label for="nombre">Nombre completo *</label>
+          <input class="form-control" id="nombre" type="text" placeholder="Ej. María García López" maxlength="100" required />
+        </div>
+        <div class="form-group--row">
+          <div class="form-group">
+            <label for="telefono">Teléfono *</label>
+            <input class="form-control" id="telefono" type="tel" placeholder="55 1234 5678" maxlength="15" required />
+          </div>
+          <div class="form-group">
+            <label for="email">Email *</label>
+            <input class="form-control" id="email" type="email" placeholder="tu@email.com" maxlength="100" required />
+          </div>
+        </div>
+      </div>
+
+      <!-- Dirección de entrega -->
+      <div class="form-section">
+        <h3>🚚 Dirección de entrega</h3>
+
+        <!-- CÓDIGO POSTAL — Validación primaria -->
+        <div class="form-group">
+          <label for="codigoPostal">Código Postal * <span style="color:#888;font-size:0.8rem">(verificamos cobertura)</span></label>
+          <div class="cp-wrapper">
+            <input
+              class="form-control"
+              id="codigoPostal"
+              type="text"
+              placeholder="Ej. 90300"
+              maxlength="5"
+              pattern="[0-9]{5}"
+              inputmode="numeric"
+              required
+            />
+            <span class="cp-estado" id="cpEstado"></span>
+          </div>
+          <div class="alerta-cp" id="alertaCP" role="alert"></div>
+        </div>
+
+        <div class="form-group--row">
+          <div class="form-group">
+            <label for="calle">Calle *</label>
+            <input class="form-control" id="calle" type="text" placeholder="Av. Independencia" maxlength="200" required />
+          </div>
+          <div class="form-group">
+            <label for="numero">Número *</label>
+            <input class="form-control" id="numero" type="text" placeholder="123 Int. 4" maxlength="20" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="colonia">Colonia *</label>
+          <input class="form-control" id="colonia" type="text" placeholder="Col. Centro" maxlength="100" required />
+        </div>
+        <div class="form-group">
+          <label for="ciudad">Ciudad *</label>
+          <input class="form-control" id="ciudad" type="text" placeholder="Apizaco" maxlength="100" value="Apizaco" required />
+        </div>
+        <div class="form-group">
+          <label for="instrucciones">Instrucciones especiales</label>
+          <textarea class="form-control" id="instrucciones" rows="2" placeholder="Ej. Dejar en recepción, tocar el timbre 2 veces..." maxlength="300"></textarea>
+        </div>
+      </div>
+
+      <!-- Fecha y hora de entrega -->
+      <div class="form-section">
+        <h3>📅 Fecha y hora de entrega</h3>
+        <div class="form-group--row">
+          <div class="form-group">
+            <label for="fechaEntrega">Fecha *</label>
+            <input class="form-control" id="fechaEntrega" type="date" required />
+          </div>
+          <div class="form-group">
+            <label for="horaEntrega">Hora preferida</label>
+            <select class="form-control" id="horaEntrega">
+              <option value="Sin especificar">Sin preferencia</option>
+              <option value="10:00 - 12:00">10:00 – 12:00</option>
+              <option value="12:00 - 14:00">12:00 – 14:00</option>
+              <option value="14:00 - 16:00">14:00 – 16:00</option>
+              <option value="16:00 - 18:00">16:00 – 18:00</option>
+              <option value="18:00 - 20:00">18:00 – 20:00</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error general -->
+      <div id="errorGeneral" style="background:#fff5f5;border:1px solid #fed7d7;color:#c53030;padding:12px 16px;border-radius:10px;margin-bottom:16px;display:none" role="alert"></div>
+
+      <!-- Botón de pago -->
+      <button class="btn btn--primary btn--block" id="btnPagar" style="font-size:1.05rem;padding:16px">
+        🔒 Pagar con Mercado Pago
+      </button>
+      <p style="text-align:center;font-size:0.8rem;color:#999;margin-top:10px">
+        Pago 100% seguro. No almacenamos datos de tu tarjeta.
+      </p>
+    </div>
+
+    <!-- ── Resumen del pedido ── -->
+    <div>
+      <div class="resumen-card">
+        <h3>Resumen de pedido</h3>
+        <div id="resumenItems">
+          <!-- Se rellena con JS -->
+        </div>
+        <hr class="resumen-divider" />
+        <div class="resumen-linea">
+          <span>Subtotal</span>
+          <strong id="resumenSubtotal">$0.00</strong>
+        </div>
+        <div class="resumen-linea">
+          <span>Envío a domicilio</span>
+          <strong id="resumenEnvio" style="color:var(--gris-texto)">$80.00</strong>
+        </div>
+        <hr class="resumen-divider" />
+        <div class="resumen-total">
+          <span>Total</span>
+          <span id="resumenTotal">$0.00</span>
+        </div>
+        <p style="font-size:0.75rem;color:#bbb;margin-top:12px;line-height:1.5">
+          Al pagar aceptas nuestros términos de servicio y política de entrega.
+        </p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+'use strict';
+
+// ── Configuración ─────────────────────────────
+const API_BASE  = window.FLORERIA_API_URL || 'https://tu-api.onrender.com';
+const COSTO_ENVIO = 80;
+
+// ── Códigos postales de cobertura (copia del backend) ──
+// IMPORTANTE: El backend es la fuente de verdad. Esta lista
+// es solo para UX rápida. La validación real ocurre en el servidor.
+const CP_COBERTURA = new Set([
+  '90300','90301','90302','90303','90304','90305','90306','90307','90308','90309',
+  '90310','90311','90312','90313','90314',
+  '90000','90001','90010','90020','90024','90025','90030','90040','90050','90060',
+  '90070','90080','90090',
+  '90800','90801','90802','90803','90804','90805','90806','90810','90820','90830',
+  '90600','90601','90602','90603',
+  '90620','90621','90622',
+  '90640','90641','90642',
+  '90660','90661',
+  '90680','90681',
+]);
+
+// ── Estado del formulario ─────────────────────
+let cpValido    = false;
+let enviando    = false;
+
+// ── Helpers ───────────────────────────────────
+const formatearPrecio = (n) =>
+  new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n);
+
+const escapeHtml = (str) =>
+  String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function obtenerCarritoDesdeStorage() {
+  try {
+    const data = JSON.parse(localStorage.getItem('floreria_carrito') || '[]');
+    return Array.isArray(data) ? data : [];
+  } catch { return []; }
+}
+
+// ── Inicialización ────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const carrito = obtenerCarritoDesdeStorage();
+
+  // Si el carrito está vacío, mostrar alerta y ocultar el formulario
+  if (carrito.length === 0) {
+    document.getElementById('carritoVacioAlerta').hidden = false;
+    document.getElementById('checkoutContenido').hidden = true;
+    return;
+  }
+
+  renderizarResumen(carrito);
+  configurarValidacionCP();
+  configurarFechaMinima();
+  configurarFormulario(carrito);
+});
+
+// ── Resumen del pedido ────────────────────────
+function renderizarResumen(carrito) {
+  const itemsEl    = document.getElementById('resumenItems');
+  const subtotalEl = document.getElementById('resumenSubtotal');
+  const envioEl    = document.getElementById('resumenEnvio');
+  const totalEl    = document.getElementById('resumenTotal');
+
+  const subtotal = carrito.reduce((acc, item) => acc + item.precio, 0);
+  const total    = subtotal + COSTO_ENVIO;
+
+  itemsEl.innerHTML = carrito.map(item => `
+    <div class="resumen-linea">
+      <span>${escapeHtml(item.nombre)} ${item.esExtra ? '🎁' : '🌹'}</span>
+      <strong>${formatearPrecio(item.precio)}</strong>
+    </div>
+  `).join('');
+
+  subtotalEl.textContent = formatearPrecio(subtotal);
+  envioEl.textContent    = formatearPrecio(COSTO_ENVIO);
+  totalEl.textContent    = formatearPrecio(total);
+}
+
+// ── Validación de Código Postal ───────────────
+
+/**
+ * Valida el CP ingresado contra la lista de cobertura.
+ * Esta función es el núcleo del requerimiento de validación local.
+ */
+function validarCodigoPostal(cp) {
+  const cpEstadoEl = document.getElementById('cpEstado');
+  const alertaEl   = document.getElementById('alertaCP');
+  const inputEl    = document.getElementById('codigoPostal');
+
+  // Limpiar estados previos
+  alertaEl.className = 'alerta-cp';
+  alertaEl.textContent = '';
+  cpEstadoEl.textContent = '';
+  inputEl.classList.remove('error');
+  cpValido = false;
+
+  // Solo validar cuando hay 5 dígitos
+  if (cp.length !== 5 || !/^\d{5}$/.test(cp)) return;
+
+  if (CP_COBERTURA.has(cp)) {
+    // ✅ CP dentro de zona de cobertura
+    cpValido = true;
+    cpEstadoEl.textContent = '✓';
+    cpEstadoEl.className   = 'cp-estado ok';
+    alertaEl.textContent   = '✅ ¡Genial! Entregamos en tu zona.';
+    alertaEl.className     = 'alerta-cp ok';
+  } else {
+    // ❌ CP fuera de zona de cobertura
+    cpValido = false;
+    cpEstadoEl.textContent = '✗';
+    cpEstadoEl.className   = 'cp-estado error';
+    alertaEl.textContent   = '⚠️ Solo entregamos en la zona local (Apizaco y municipios aledaños de Tlaxcala). Por favor verifica tu código postal.';
+    alertaEl.className     = 'alerta-cp error';
+    inputEl.classList.add('error');
+  }
+}
+
+function configurarValidacionCP() {
+  const inputCP = document.getElementById('codigoPostal');
+  inputCP.addEventListener('input', (e) => {
+    // Permitir solo dígitos
+    const cp = e.target.value.replace(/\D/g, '').substring(0, 5);
+    e.target.value = cp;
+    validarCodigoPostal(cp);
+  });
+  inputCP.addEventListener('blur', (e) => {
+    validarCodigoPostal(e.target.value);
+  });
+}
+
+// ── Fecha mínima: mañana ──────────────────────
+function configurarFechaMinima() {
+  const inputFecha = document.getElementById('fechaEntrega');
+  const manana = new Date();
+  manana.setDate(manana.getDate() + 1);
+  const yyyy = manana.getFullYear();
+  const mm   = String(manana.getMonth() + 1).padStart(2, '0');
+  const dd   = String(manana.getDate()).padStart(2, '0');
+  inputFecha.min = `${yyyy}-${mm}-${dd}`;
+}
+
+// ── Validación del formulario completo ────────
+function validarFormulario() {
+  const errores = [];
+
+  const nombre = document.getElementById('nombre').value.trim();
+  const email  = document.getElementById('email').value.trim();
+  const tel    = document.getElementById('telefono').value.trim();
+  const calle  = document.getElementById('calle').value.trim();
+  const num    = document.getElementById('numero').value.trim();
+  const col    = document.getElementById('colonia').value.trim();
+  const fecha  = document.getElementById('fechaEntrega').value;
+  const cp     = document.getElementById('codigoPostal').value.trim();
+
+  if (!nombre)  errores.push('El nombre es requerido.');
+  if (!email || !/^\S+@\S+\.\S+$/.test(email)) errores.push('El email no es válido.');
+  if (!tel || tel.length < 10) errores.push('El teléfono debe tener al menos 10 dígitos.');
+  if (!cp || cp.length !== 5) errores.push('Ingresa un código postal de 5 dígitos.');
+  if (!cpValido) errores.push('El código postal no está dentro de nuestra zona de cobertura.');
+  if (!calle)   errores.push('La calle es requerida.');
+  if (!num)     errores.push('El número es requerido.');
+  if (!col)     errores.push('La colonia es requerida.');
+  if (!fecha)   errores.push('La fecha de entrega es requerida.');
+
+  return errores;
+}
+
+// ── Envío del formulario → crear pedido ───────
+function configurarFormulario(carrito) {
+  const btnPagar   = document.getElementById('btnPagar');
+  const errorEl    = document.getElementById('errorGeneral');
+
+  btnPagar.addEventListener('click', async () => {
+    if (enviando) return;
+
+    // Limpiar error previo
+    errorEl.style.display = 'none';
+
+    // Validar
+    const errores = validarFormulario();
+    if (errores.length > 0) {
+      errorEl.innerHTML = errores.map(e => `<p>• ${escapeHtml(e)}</p>`).join('');
+      errorEl.style.display = 'block';
+      errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    // Extraer IDs del carrito
+    const ramos  = carrito.filter(i => !i.esExtra);
+    const extras = carrito.filter(i => i.esExtra);
+
+    if (ramos.length === 0) {
+      errorEl.textContent = 'Debes tener al menos un ramo en el carrito.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    // Preparar payload
+    const payload = {
+      cliente: {
+        nombre:   document.getElementById('nombre').value.trim(),
+        email:    document.getElementById('email').value.trim(),
+        telefono: document.getElementById('telefono').value.trim(),
+      },
+      entrega: {
+        calle:        document.getElementById('calle').value.trim(),
+        numero:       document.getElementById('numero').value.trim(),
+        colonia:      document.getElementById('colonia').value.trim(),
+        ciudad:       document.getElementById('ciudad').value.trim(),
+        codigoPostal: document.getElementById('codigoPostal').value.trim(),
+        fechaEntrega: document.getElementById('fechaEntrega').value,
+        horaEntrega:  document.getElementById('horaEntrega').value,
+        instrucciones: document.getElementById('instrucciones').value.trim(),
+      },
+      ramoId:    ramos[0].id,
+      extrasIds: extras.map(e => e.id),
+    };
+
+    // Mostrar estado de carga
+    enviando = true;
+    btnPagar.disabled = true;
+    btnPagar.textContent = '⏳ Procesando...';
+
+    try {
+      const res = await fetch(`${API_BASE}/api/pedidos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Error al procesar el pedido.');
+      }
+
+      // Redirigir a Mercado Pago
+      if (data.urlPago) {
+        // Limpiar carrito antes de redirigir
+        localStorage.removeItem('floreria_carrito');
+        window.location.href = data.urlPago;
+      } else {
+        throw new Error('No se recibió la URL de pago.');
+      }
+
+    } catch (error) {
+      errorEl.textContent = `❌ ${error.message}`;
+      errorEl.style.display = 'block';
+      errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } finally {
+      enviando = false;
+      btnPagar.disabled = false;
+      btnPagar.textContent = '🔒 Pagar con Mercado Pago';
+    }
+  });
+}
+</script>
+
+</body>
+</html>
